@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { Button } from '@salesforce/design-system-react'
 import heroImage from './assets/hero.png'
 import './App.css'
@@ -86,6 +87,74 @@ const promptRules = [
   'Provide realistic record data so the prototype feels like a business review, not a wireframe.',
   'Call out user intent: seller update, service triage, admin setup, executive summary, or approval flow.',
 ]
+
+const prototypeTemplates = [
+  {
+    id: 'account',
+    name: 'Account workspace',
+    object: 'Account',
+    summary: 'Record page, related lists, activity, and approval follow-up screens.',
+    accent: '#5867e8',
+  },
+  {
+    id: 'opportunity',
+    name: 'Opportunity pursuit',
+    object: 'Opportunity',
+    summary: 'Pipeline list, deal room, next steps, products, and decision path.',
+    accent: '#ff5d2d',
+  },
+  {
+    id: 'case',
+    name: 'Service console',
+    object: 'Case',
+    summary: 'Queue, case detail, knowledge, customer timeline, and escalation flow.',
+    accent: '#06a59a',
+  },
+]
+
+const starterProjects = [
+  {
+    id: 'acme-account-review',
+    name: 'Acme account review',
+    templateId: 'account',
+    status: 'Ready for review',
+    updated: 'Today',
+    description: 'Executive account page for a seller preparing a QBR.',
+  },
+  {
+    id: 'enterprise-renewal',
+    name: 'Enterprise renewal flow',
+    templateId: 'opportunity',
+    status: 'Draft',
+    updated: 'Yesterday',
+    description: 'Renewal workspace with path, stakeholders, and approval screens.',
+  },
+]
+
+const prototypeScreens = [
+  {
+    id: 'list',
+    title: 'Workspace list',
+    type: 'List View',
+    description: 'A Salesforce list view entry point for choosing a record or process.',
+  },
+  {
+    id: 'record',
+    title: 'Record detail',
+    type: 'Record Page',
+    description: 'A high-fidelity record page with highlights, tabs, related lists, and activity.',
+  },
+  {
+    id: 'flow',
+    title: 'Guided flow',
+    type: 'Flow Screen',
+    description: 'A navigable Salesforce-style flow for the next user action.',
+  },
+]
+
+function getTemplate(templateId) {
+  return prototypeTemplates.find((template) => template.id === templateId) ?? prototypeTemplates[0]
+}
 
 function LandingHeader() {
   return (
@@ -193,6 +262,340 @@ function StackItem({ title, text }) {
       <h3>{title}</h3>
       <p>{text}</p>
     </article>
+  )
+}
+
+function ProductTopBar({ onShowLanding }) {
+  return (
+    <header className="product-topbar">
+      <a className="product-logo" href="#projects" aria-label="SF Rapid Prototyping Codex">
+        <span>SF</span>
+        <strong>Rapid Prototyping Codex</strong>
+      </a>
+      <nav aria-label="Product navigation">
+        <a href="#projects">Projects</a>
+        <a href="#create">New prototype</a>
+        <button type="button" onClick={onShowLanding}>
+          About
+        </button>
+      </nav>
+    </header>
+  )
+}
+
+function ProjectDashboard({ projects, onCreateProject, onOpenProject, onShowLanding }) {
+  const [draft, setDraft] = useState({
+    name: '',
+    templateId: 'account',
+    description: '',
+  })
+
+  const selectedTemplate = getTemplate(draft.templateId)
+
+  function handleSubmit(event) {
+    event.preventDefault()
+    const name = draft.name.trim() || `${selectedTemplate.object} prototype`
+
+    onCreateProject({
+      id: `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`,
+      name,
+      templateId: draft.templateId,
+      status: 'Draft',
+      updated: 'Just now',
+      description: draft.description.trim() || selectedTemplate.summary,
+    })
+
+    setDraft({
+      name: '',
+      templateId: 'account',
+      description: '',
+    })
+  }
+
+  return (
+    <div className="product-shell">
+      <ProductTopBar onShowLanding={onShowLanding} />
+      <main className="dashboard-page" id="projects">
+        <section className="dashboard-hero">
+          <div>
+            <p className="eyebrow">Prototype command center</p>
+            <h1>Manage Salesforce prototypes like product projects</h1>
+            <p>
+              Start from a Salesforce surface, create a project, and open a navigable prototype workspace with SLDS
+              styling, realistic business data, and review-ready screens.
+            </p>
+          </div>
+          <div className="dashboard-metrics" aria-label="Prototype metrics">
+            <MetricCard label="Projects" value={String(projects.length).padStart(2, '0')} />
+            <MetricCard label="Templates" value="03" />
+            <MetricCard label="Vercel" value="Ready" />
+          </div>
+        </section>
+
+        <section className="dashboard-grid">
+          <div className="projects-panel">
+            <div className="panel-heading-row">
+              <div>
+                <p className="eyebrow">Projects</p>
+                <h2>Prototype library</h2>
+              </div>
+              <a className="small-action" href="#create">
+                Create
+              </a>
+            </div>
+            <div className="project-grid">
+              {projects.map((project) => (
+                <ProjectCard project={project} key={project.id} onOpenProject={onOpenProject} />
+              ))}
+            </div>
+          </div>
+
+          <form className="create-panel" id="create" onSubmit={handleSubmit}>
+            <p className="eyebrow">New project</p>
+            <h2>Create a navigable prototype</h2>
+            <label>
+              <span>Project name</span>
+              <input
+                value={draft.name}
+                onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+                placeholder="Example: Strategic account cockpit"
+              />
+            </label>
+            <label>
+              <span>Salesforce starter</span>
+              <select
+                value={draft.templateId}
+                onChange={(event) => setDraft({ ...draft, templateId: event.target.value })}
+              >
+                {prototypeTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Prototype brief</span>
+              <textarea
+                value={draft.description}
+                onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+                placeholder="Describe the Salesforce page, users, actions, data, and screens you want Codex to generate."
+                rows="5"
+              />
+            </label>
+            <div className="template-preview" style={{ borderColor: selectedTemplate.accent }}>
+              <strong>{selectedTemplate.object}</strong>
+              <p>{selectedTemplate.summary}</p>
+            </div>
+            <button className="primary-link button-reset" type="submit">
+              Create project
+            </button>
+          </form>
+        </section>
+      </main>
+    </div>
+  )
+}
+
+function MetricCard({ label, value }) {
+  return (
+    <div className="metric-card">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  )
+}
+
+function ProjectCard({ project, onOpenProject }) {
+  const template = getTemplate(project.templateId)
+
+  return (
+    <article className="project-card">
+      <div className="project-accent" style={{ background: template.accent }} />
+      <div>
+        <span className="project-object">{template.object}</span>
+        <h3>{project.name}</h3>
+        <p>{project.description}</p>
+      </div>
+      <div className="project-meta">
+        <span>{project.status}</span>
+        <span>{project.updated}</span>
+      </div>
+      <button type="button" onClick={() => onOpenProject(project.id)}>
+        Open prototype
+      </button>
+    </article>
+  )
+}
+
+function PrototypeWorkspace({ project, onBack }) {
+  const [activeScreen, setActiveScreen] = useState('list')
+  const template = getTemplate(project.templateId)
+  const active = prototypeScreens.find((screen) => screen.id === activeScreen) ?? prototypeScreens[0]
+
+  return (
+    <div className="workspace-product-shell">
+      <aside className="workspace-sidebar">
+        <button className="back-button" type="button" onClick={onBack}>
+          Back to projects
+        </button>
+        <div className="workspace-title">
+          <span style={{ background: template.accent }}>{template.object.slice(0, 1)}</span>
+          <div>
+            <p>{template.object}</p>
+            <h1>{project.name}</h1>
+          </div>
+        </div>
+        <nav aria-label="Prototype screens">
+          {prototypeScreens.map((screen) => (
+            <button
+              className={screen.id === activeScreen ? 'screen-nav-item active' : 'screen-nav-item'}
+              key={screen.id}
+              type="button"
+              onClick={() => setActiveScreen(screen.id)}
+            >
+              <strong>{screen.title}</strong>
+              <span>{screen.type}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+      <main className="workspace-main">
+        <header className="workspace-header">
+          <div>
+            <p className="eyebrow">{active.type}</p>
+            <h2>{active.title}</h2>
+            <p>{active.description}</p>
+          </div>
+          <div className="workspace-actions">
+            <Button label="Share" />
+            <Button label="Request review" variant="brand" />
+          </div>
+        </header>
+        <div className="workspace-canvas">
+          <SalesforcePrototype project={project} template={template} activeScreen={activeScreen} />
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function SalesforcePrototype({ project, template, activeScreen }) {
+  return (
+    <div className="salesforce-shell workspace-salesforce-shell">
+      <AppHeader />
+      <AppNav />
+      <main className="page-frame">
+        {activeScreen === 'list' ? <PrototypeListView project={project} template={template} /> : null}
+        {activeScreen === 'record' ? <AccountRecordContent /> : null}
+        {activeScreen === 'flow' ? <PrototypeFlow project={project} template={template} /> : null}
+      </main>
+    </div>
+  )
+}
+
+function PrototypeListView({ project, template }) {
+  const rows = [
+    ['Acme Global Holdings', 'Customer - Direct', '$18.4M', 'Camila Rocha', 'Green'],
+    ['Northstar Logistics', 'Prospect', '$7.8M', 'Daniel Lima', 'Amber'],
+    ['BluePeak Manufacturing', 'Customer - Channel', '$12.1M', 'Marina Costa', 'Green'],
+  ]
+
+  return (
+    <>
+      <section className="slds-page-header record-header">
+        <div className="slds-page-header__row">
+          <div className="slds-page-header__col-title">
+            <p className="slds-text-title_caps">{template.object}</p>
+            <h1 className="slds-page-header__title slds-truncate">{project.name}</h1>
+          </div>
+          <div className="slds-page-header__col-actions">
+            <Button label="New" variant="brand" />
+          </div>
+        </div>
+      </section>
+      <section className="slds-card related-card prototype-list-card">
+        <div className="slds-card__header slds-grid">
+          <header className="slds-media slds-media_center slds-has-flexi-truncate">
+            <div className="slds-media__body">
+              <h2 className="slds-card__header-title">
+                <span>Recently viewed strategic records</span>
+              </h2>
+            </div>
+          </header>
+        </div>
+        <div className="slds-card__body">
+          <table className="slds-table slds-table_cell-buffer slds-table_bordered">
+            <thead>
+              <tr>
+                {['Name', 'Type', 'Revenue', 'Owner', 'Health'].map((column) => (
+                  <th key={column} scope="col">
+                    {column}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row[0]}>
+                  {row.map((cell, index) => (
+                    <td key={`${row[0]}-${cell}`}>{index === 0 ? <a href="#workspace">{cell}</a> : cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  )
+}
+
+function PrototypeFlow({ project, template }) {
+  return (
+    <section className="slds-card flow-screen">
+      <div className="slds-card__header">
+        <h2 className="slds-card__header-title">
+          <span>{template.object} review flow</span>
+        </h2>
+      </div>
+      <div className="slds-card__body slds-card__body_inner">
+        <div className="flow-path-row">
+          {['Identify record', 'Review gaps', 'Assign action', 'Confirm'].map((step, index) => (
+            <div className={`flow-step ${index === 1 ? 'active' : ''}`} key={step}>
+              <span>{index + 1}</span>
+              <strong>{step}</strong>
+            </div>
+          ))}
+        </div>
+        <div className="flow-form-grid">
+          <label>
+            <span>Review owner</span>
+            <input className="slds-input" defaultValue="Camila Rocha" />
+          </label>
+          <label>
+            <span>Business priority</span>
+            <select className="slds-select" defaultValue="High">
+              <option>High</option>
+              <option>Medium</option>
+              <option>Low</option>
+            </select>
+          </label>
+          <label className="flow-wide">
+            <span>Next best action</span>
+            <textarea
+              className="slds-textarea"
+              defaultValue={`Prepare ${project.name} review notes and confirm stakeholder alignment.`}
+              rows="4"
+            />
+          </label>
+        </div>
+        <div className="flow-footer">
+          <Button label="Previous" />
+          <Button label="Save & Finish" variant="brand" />
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -469,6 +872,58 @@ function RelatedList({ title, rows, columns }) {
   )
 }
 
+function AccountRecordContent() {
+  return (
+    <>
+      <RecordHeader />
+      <div className="slds-tabs_default record-tabs">
+        <ul className="slds-tabs_default__nav" role="tablist">
+          {['Related', 'Details', 'News', 'Activity'].map((tab, index) => (
+            <li
+              className={`slds-tabs_default__item ${index === 0 ? 'slds-is-active' : ''}`}
+              key={tab}
+              role="presentation"
+            >
+              <a className="slds-tabs_default__link" href="#demo" role="tab">
+                {tab}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="content-layout">
+        <div className="primary-column">
+          <RelatedList
+            title="Contacts"
+            rows={contacts}
+            columns={[
+              { key: 'name', label: 'Name' },
+              { key: 'title', label: 'Title' },
+              { key: 'email', label: 'Email' },
+              { key: 'phone', label: 'Phone' },
+            ]}
+          />
+          <RelatedList
+            title="Opportunities"
+            rows={opportunities}
+            columns={[
+              { key: 'name', label: 'Opportunity Name' },
+              { key: 'stage', label: 'Stage' },
+              { key: 'amount', label: 'Amount' },
+              { key: 'closeDate', label: 'Close Date' },
+              { key: 'owner', label: 'Owner' },
+            ]}
+          />
+        </div>
+        <aside className="side-column">
+          <ActivityPanel />
+          <DetailsPanel />
+        </aside>
+      </div>
+    </>
+  )
+}
+
 function AccountDemo() {
   return (
     <section className="demo-section" id="demo">
@@ -484,51 +939,7 @@ function AccountDemo() {
         <AppHeader />
         <AppNav />
         <main className="page-frame">
-          <RecordHeader />
-          <div className="slds-tabs_default record-tabs">
-            <ul className="slds-tabs_default__nav" role="tablist">
-              {['Related', 'Details', 'News', 'Activity'].map((tab, index) => (
-                <li
-                  className={`slds-tabs_default__item ${index === 0 ? 'slds-is-active' : ''}`}
-                  key={tab}
-                  role="presentation"
-                >
-                  <a className="slds-tabs_default__link" href="#demo" role="tab">
-                    {tab}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="content-layout">
-            <div className="primary-column">
-              <RelatedList
-                title="Contacts"
-                rows={contacts}
-                columns={[
-                  { key: 'name', label: 'Name' },
-                  { key: 'title', label: 'Title' },
-                  { key: 'email', label: 'Email' },
-                  { key: 'phone', label: 'Phone' },
-                ]}
-              />
-              <RelatedList
-                title="Opportunities"
-                rows={opportunities}
-                columns={[
-                  { key: 'name', label: 'Opportunity Name' },
-                  { key: 'stage', label: 'Stage' },
-                  { key: 'amount', label: 'Amount' },
-                  { key: 'closeDate', label: 'Close Date' },
-                  { key: 'owner', label: 'Owner' },
-                ]}
-              />
-            </div>
-            <aside className="side-column">
-              <ActivityPanel />
-              <DetailsPanel />
-            </aside>
-          </div>
+          <AccountRecordContent />
         </main>
       </div>
     </section>
@@ -536,14 +947,51 @@ function AccountDemo() {
 }
 
 function App() {
+  const [view, setView] = useState('dashboard')
+  const [projects, setProjects] = useState(starterProjects)
+  const [activeProjectId, setActiveProjectId] = useState(starterProjects[0].id)
+  const activeProject = useMemo(
+    () => projects.find((project) => project.id === activeProjectId) ?? projects[0],
+    [activeProjectId, projects],
+  )
+
+  function createProject(project) {
+    setProjects((currentProjects) => [project, ...currentProjects])
+    setActiveProjectId(project.id)
+    setView('workspace')
+  }
+
+  function openProject(projectId) {
+    setActiveProjectId(projectId)
+    setView('workspace')
+  }
+
+  if (view === 'landing') {
+    return (
+      <>
+        <button className="floating-dashboard-button" type="button" onClick={() => setView('dashboard')}>
+          Open project dashboard
+        </button>
+        <LandingHero />
+        <WorkflowSection />
+        <PromptContract />
+        <AccountDemo />
+        <StackSection />
+      </>
+    )
+  }
+
+  if (view === 'workspace' && activeProject) {
+    return <PrototypeWorkspace project={activeProject} onBack={() => setView('dashboard')} />
+  }
+
   return (
-    <>
-      <LandingHero />
-      <WorkflowSection />
-      <PromptContract />
-      <AccountDemo />
-      <StackSection />
-    </>
+    <ProjectDashboard
+      projects={projects}
+      onCreateProject={createProject}
+      onOpenProject={openProject}
+      onShowLanding={() => setView('landing')}
+    />
   )
 }
 

@@ -2,7 +2,7 @@
 
 SF Rapid Prototyping Codex is a React/Vite web project for creating high-fidelity Salesforce prototypes with Codex. The goal is simple: describe the Salesforce page you want, and Codex can assemble a realistic screen using Salesforce Lightning Design System styling and React components.
 
-The first included prototype is an Account record page with Salesforce navigation, a record highlights panel, actions, related lists, activity, and account details.
+The app now opens on a project dashboard. From there, users can create Salesforce prototype projects, choose a starter template, and open a navigable workspace that renders Salesforce-style screens.
 
 ## Why This Exists
 
@@ -25,6 +25,9 @@ Use this project for Salesforce-style screens such as:
 
 The current app ships with:
 
+- A project dashboard for managing multiple Salesforce prototype projects
+- A new-project form for creating prototype workspaces from Salesforce starter templates
+- A navigable prototype workspace with list view, record detail, and guided flow screens
 - A landing page that explains the project and the prototyping workflow
 - A prompt contract section that documents how to ask Codex for new screens
 - A high-fidelity Account record page demo
@@ -50,6 +53,30 @@ Use Salesforce Lightning styling.
 Show highlights, stage path, key fields, related contacts, products, next steps, and an activity composer.
 Use realistic data for a $480k renewal opportunity closing in Q3.
 ```
+
+## Product Flow
+
+The intended product loop is:
+
+1. Open the project dashboard.
+2. Review existing prototype projects.
+3. Create a new project from a Salesforce starter template.
+4. Add a prototype brief that describes the desired Salesforce experience.
+5. Open the workspace.
+6. Navigate between generated screens such as list views, record pages, and guided flows.
+7. Iterate with Codex until the prototype is review-ready.
+
+The current implementation stores projects in local React state. Persistence can be added later with a database, local storage, or a backend service.
+
+## Starter Templates
+
+The first starter templates are:
+
+- Account workspace
+- Opportunity pursuit
+- Service console
+
+Each template is designed to give Codex a Salesforce-specific starting point while keeping the app flexible enough for custom objects and bespoke enterprise workflows.
 
 ## Tech Stack
 
@@ -107,8 +134,8 @@ No custom server is required.
 
 ```text
 src/
-  App.jsx       Main landing page and Account demo components
-  App.css       Landing page, layout, and Salesforce prototype styling
+  App.jsx       Project dashboard, workspace, landing page, and Salesforce demo components
+  App.css       Dashboard, workspace, landing page, and Salesforce prototype styling
   index.css     Global reset and font defaults
   main.jsx      React entrypoint and SLDS stylesheet import
 public/
@@ -119,6 +146,8 @@ public/
 ## Design Notes
 
 - The landing page explains the project before showing the live Salesforce prototype.
+- The dashboard is the first product screen because the tool is meant to manage many prototype projects.
+- The workspace uses internal screen navigation to make prototypes feel like flows, not static screenshots.
 - The Account demo intentionally uses realistic data so reviewers can judge density, hierarchy, labels, and Salesforce behavior.
 - SLDS classes are used for Salesforce-native surfaces such as global headers, page headers, tabs, cards, and tables.
 - The Salesforce React package is used for button primitives. Because the package is older than the current React version, new prototypes should keep build validation as part of the workflow.
@@ -135,6 +164,15 @@ Every meaningful commit should update the changelog below with:
 Keep the newest entry at the top.
 
 ## Changelog
+
+### 2026-05-06 - Project dashboard and navigable workspace
+
+- Added a first-screen project dashboard for managing multiple Salesforce prototype projects.
+- Added starter templates for Account, Opportunity, and Case-style prototype workspaces.
+- Added a new-project form with project name, Salesforce starter, and prototype brief fields.
+- Added a prototype workspace with left navigation between list view, record detail, and guided flow screens.
+- Kept the existing landing page available from the product navigation as the project explainer.
+- Validated with `npm run lint` and `npm run build`.
 
 ### 2026-05-06 - Landing page and Salesforce Account demo
 
